@@ -28,36 +28,40 @@ export async function POST(req: Request) {
 
     const project = new AIProjectClient(projectEndpoint, new DefaultAzureCredential());
 
-    // 1. Create Thread (Updated SDK Syntax)
-    const thread = await project.agents.threads.create();
+    // 1. Create Thread (Using Flat SDK Syntax)
+    const thread = await project.agents.createThread();
 
-    // 2. Create Message (Updated SDK Syntax)
-    await project.agents.messages.create(thread.id, {
+    // 2. Create Message (Using Flat SDK Syntax)
+    await project.agents.createMessage(thread.id, {
       role: "user",
       content: lastUserMessage,
     });
 
-    // 3. Create Run (Updated SDK Syntax)
-    let run = await project.agents.runs.create(thread.id, agentId);
+    // 3. Create Run (Fix: Pass agentId directly as a string, not an object)
+    let run = await project.agents.createRun(thread.id, agentId);
 
-    // 4. Poll Run Status (Updated SDK Syntax)
+    // 4. Poll Run Status (Using Flat SDK Syntax)
     while (run.status === "queued" || run.status === "in_progress") {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      run = await project.agents.runs.get(thread.id, run.id);
+      run = await project.agents.getRun(thread.id, run.id);
     }
 
     if (run.status !== "completed") {
       throw new Error(`Agent run failed. Status: ${run.status}`);
     }
 
-    // 5. List Messages (Updated SDK Syntax)
-    const threadMessages = await project.agents.messages.list(thread.id);
+    // 5. List Messages (Using Flat SDK Syntax)
+    const threadMessages = await project.agents.listMessages(thread.id);
     
     const latestResponse = threadMessages.data[0];
-    
     let responseText = "No response generated.";
-    if (latestResponse.role === "assistant" && latestResponse.content[0].type === "text") {
-        responseText = latestResponse.content[0].text.value;
+    
+    // Fix: Storing the array item in a variable allows strict TypeScript type narrowing
+    if (latestResponse && latestResponse.role === "assistant" && latestResponse.content.length > 0) {
+      const firstContent = latestResponse.content[0];
+      if (firstContent.type === "text") {
+        responseText = firstContent.text.value;
+      }
     }
 
     return NextResponse.json({ content: responseText });
