@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import WaterBackground from "./components/WaterBackground";
 
 type Role = "user" | "assistant";
@@ -42,7 +43,6 @@ export default function Home() {
   const [sending, setSending] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Load history on first mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -73,7 +73,6 @@ export default function Home() {
     setActiveId(first.id);
   }, []);
 
-  // Persist history
   useEffect(() => {
     try {
       if (convos.length > 0) localStorage.setItem(STORAGE_KEY, JSON.stringify(convos));
@@ -142,12 +141,10 @@ export default function Home() {
 
     const nextMessages: ChatMsg[] = [...active.messages, { role: "user", content: text }];
 
-    // optimistic update
     setConvos((prev) => {
       const updated = prev.map((c) => {
         if (c.id !== active.id) return c;
-        const newTitle =
-          c.title === "New chat" ? titleFromFirstUserMessage(nextMessages) : c.title;
+        const newTitle = c.title === "New chat" ? titleFromFirstUserMessage(nextMessages) : c.title;
         return { ...c, title: newTitle, messages: nextMessages, updatedAt: Date.now() };
       });
       return [...updated].sort((a, b) => b.updatedAt - a.updatedAt);
@@ -175,10 +172,7 @@ export default function Home() {
 
       if (!res.ok) throw new Error(data?.error || "Request failed");
 
-      const assistantMsg: ChatMsg = {
-        role: "assistant",
-        content: String(data.content || ""),
-      };
+      const assistantMsg: ChatMsg = { role: "assistant", content: String(data.content || "") };
 
       setConvos((prev) => {
         const updated = prev.map((c) => {
@@ -190,9 +184,7 @@ export default function Home() {
     } catch (err: any) {
       const assistantMsg: ChatMsg = {
         role: "assistant",
-        content:
-          "Could not reach the AI service.\n" +
-          (err?.message ? "Details: " + err.message : ""),
+        content: "Could not reach the AI service.\n" + (err?.message ? "Details: " + err.message : ""),
       };
 
       setConvos((prev) => {
@@ -212,49 +204,21 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen overflow-hidden text-white">
-      {/* Water background (moving) + ripple clicks */}
       <WaterBackground />
 
-      {/* Animations */}
       <style jsx global>{`
         @keyframes borderFlow {
-          0% {
-            background-position: 0% 50%;
-          }
-          100% {
-            background-position: 200% 50%;
-          }
-        }
-        @keyframes heroFloat {
-          0%,
-          100% {
-            transform: translateY(0px) scale(1);
-          }
-          50% {
-            transform: translateY(-8px) scale(1.01);
-          }
-        }
-        @keyframes heroPulse {
-          0%,
-          100% {
-            opacity: 0.92;
-          }
-          50% {
-            opacity: 1;
-          }
-        }
-        .rayHeroAnim {
-          animation: heroFloat 7s ease-in-out infinite, heroPulse 5s ease-in-out infinite;
-          will-change: transform, opacity;
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
         }
       `}</style>
 
-      {/* LEFT SIDEBAR */}
+      {/* Sidebar */}
       <aside
         data-no-ripple="true"
         className="fixed left-0 top-0 z-30 h-full"
         style={{
-          width: sidebarCollapsed ? "72px" : "300px",
+          width: sidebarCollapsed ? "84px" : "320px",
           transition: "width 180ms ease",
           background: "rgba(0,0,0,0.62)",
           borderRight: "1px solid rgba(255,255,255,0.10)",
@@ -262,23 +226,25 @@ export default function Home() {
         }}
       >
         <div className="flex h-full flex-col p-3">
-          {/* Company logo top-left */}
-          <div className="flex items-center gap-2 mb-3">
+          {/* Company logo */}
+          <div className="flex items-center gap-12 mb-3">
             <div
-              className="grid place-items-center rounded-xl bg-white/10"
+              className="relative rounded-2xl bg-white/10"
               style={{
-                width: sidebarCollapsed ? 44 : 56,
-                height: sidebarCollapsed ? 44 : 56,
-                border: "1px solid rgba(255,255,255,0.10)",
+                width: sidebarCollapsed ? 56 : 72,
+                height: sidebarCollapsed ? 56 : 72,
+                border: "1px solid rgba(255,255,255,0.12)",
                 overflow: "hidden",
               }}
               title="Company"
             >
-              <img
+              <Image
                 src="/images/company-logo.png"
                 alt="Company logo"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                draggable={false}
+                fill
+                sizes="72px"
+                style={{ objectFit: "contain", padding: "10px" }}
+                priority
               />
             </div>
 
@@ -299,12 +265,7 @@ export default function Home() {
               title="Toggle"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M4 7h16M4 12h16M4 17h16"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
+                <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </button>
 
@@ -327,12 +288,7 @@ export default function Home() {
               title="New Chat"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M12 5v14M5 12h14"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
+                <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </button>
           )}
@@ -385,26 +341,19 @@ export default function Home() {
               );
             })}
           </div>
-
-          {!sidebarCollapsed && (
-            <div className="pt-2 text-[11px] text-white/40">
-              Tip: Click a chat title to reload it.
-            </div>
-          )}
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
+      {/* Main content */}
       <div
         className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col items-center px-4"
         style={{
-          paddingLeft: sidebarCollapsed ? "96px" : "324px",
+          paddingLeft: sidebarCollapsed ? "104px" : "344px",
           transition: "padding-left 180ms ease",
         }}
       >
-        {/* WebM logo + heading */}
         <div className="mt-16 sm:mt-20 text-center select-none" data-no-ripple="true">
-          <div className="relative mx-auto w-[200px] sm:w-[250px] md:w-[300px] rayHeroAnim">
+          <div className="relative mx-auto w-[240px] sm:w-[300px] md:w-[340px]">
             <div
               className="pointer-events-none absolute -inset-10 rounded-full"
               style={{
@@ -416,10 +365,7 @@ export default function Home() {
 
             <div
               className="relative w-full overflow-hidden"
-              style={{
-                clipPath: "inset(6px round 999px)",
-                borderRadius: "999px",
-              }}
+              style={{ clipPath: "inset(6px round 999px)", borderRadius: "999px" }}
             >
               <video
                 autoPlay
@@ -428,8 +374,6 @@ export default function Home() {
                 playsInline
                 preload="auto"
                 controls={false}
-                disablePictureInPicture
-                controlsList="nodownload noplaybackrate noremoteplayback"
                 tabIndex={-1}
                 aria-hidden="true"
                 className="block w-full h-auto"
@@ -444,12 +388,13 @@ export default function Home() {
                 poster="/media/ray-logo.png"
               >
                 <source src="/media/ray-logo.webm" type="video/webm" />
+                Your browser does not support the video tag.
               </video>
             </div>
           </div>
 
           <div
-            className="mt-6 font-semibold text-white/92 rayHeroAnim"
+            className="mt-6 font-semibold text-white/92"
             style={{
               fontSize: "clamp(26px, 3vw, 52px)",
               lineHeight: 1.18,
@@ -461,7 +406,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Prompt box */}
         <div className="w-full max-w-2xl" style={{ marginTop: "26vh" }} data-no-ripple="true">
           <div className="relative">
             <div
@@ -497,30 +441,18 @@ export default function Home() {
                   placeholder="What do you want to know?"
                   className="w-full bg-transparent text-sm text-white placeholder:text-white/60 outline-none"
                 />
-
                 <button
                   onClick={send}
                   disabled={sending || !input.trim()}
-                  className="group relative grid h-11 w-11 place-items-center rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="grid h-11 w-11 place-items-center rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Send"
                   style={{
-                    background:
-                      "linear-gradient(135deg, rgba(34,211,238,0.95), rgba(59,130,246,0.90))",
+                    background: "linear-gradient(135deg, rgba(34,211,238,0.95), rgba(59,130,246,0.90))",
                     boxShadow:
                       "0 18px 55px rgba(34,211,238,0.22), inset 0 0 0 1px rgba(255,255,255,0.18)",
-                    transform: "translateY(0px)",
-                    transition:
-                      "transform 180ms ease, box-shadow 180ms ease, filter 180ms ease",
                   }}
                 >
-                  <span
-                    className="absolute inset-[2px] rounded-full opacity-70"
-                    style={{
-                      background:
-                        "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.55), rgba(255,255,255,0.0) 60%)",
-                    }}
-                  />
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="relative text-[#061a3a]" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[#061a3a]" aria-hidden="true">
                     <path d="M5 12h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                     <path d="M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -537,4 +469,3 @@ export default function Home() {
     </main>
   );
 }
-``
