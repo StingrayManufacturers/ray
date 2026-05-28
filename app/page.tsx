@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import WaterBackground from "./components/WaterBackground";
 
 type Role = "user" | "assistant";
@@ -26,7 +25,7 @@ function titleFromFirstUserMessage(messages: ChatMsg[]) {
   const firstUser = messages.find((m) => m.role === "user")?.content?.trim() || "";
   if (!firstUser) return "New chat";
   const clean = firstUser.replace(/\s+/g, " ");
-  return clean.length > 34 ? clean.slice(0, 34) + "…" : clean;
+  return clean.length > 34 ? clean.slice(0, 34) + "..." : clean;
 }
 
 export default function Home() {
@@ -43,7 +42,7 @@ export default function Home() {
   const [sending, setSending] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Load saved history on first mount
+  // Load history on first mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -147,7 +146,8 @@ export default function Home() {
     setConvos((prev) => {
       const updated = prev.map((c) => {
         if (c.id !== active.id) return c;
-        const newTitle = c.title === "New chat" ? titleFromFirstUserMessage(nextMessages) : c.title;
+        const newTitle =
+          c.title === "New chat" ? titleFromFirstUserMessage(nextMessages) : c.title;
         return { ...c, title: newTitle, messages: nextMessages, updatedAt: Date.now() };
       });
       return [...updated].sort((a, b) => b.updatedAt - a.updatedAt);
@@ -163,7 +163,6 @@ export default function Home() {
         body: JSON.stringify({ messages: nextMessages }),
       });
 
-      // SAFETY: avoid JSON parse crash if server returns HTML
       const contentType = res.headers.get("content-type") || "";
       let data: any = null;
 
@@ -176,7 +175,10 @@ export default function Home() {
 
       if (!res.ok) throw new Error(data?.error || "Request failed");
 
-      const assistantMsg: ChatMsg = { role: "assistant", content: String(data.content || "") };
+      const assistantMsg: ChatMsg = {
+        role: "assistant",
+        content: String(data.content || ""),
+      };
 
       setConvos((prev) => {
         const updated = prev.map((c) => {
@@ -210,9 +212,10 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen overflow-hidden text-white">
-      {/* Moving water + ripple clicks */}
+      {/* Water background (moving) + ripple clicks */}
       <WaterBackground />
 
+      {/* Animations */}
       <style jsx global>{`
         @keyframes borderFlow {
           0% {
@@ -259,7 +262,7 @@ export default function Home() {
         }}
       >
         <div className="flex h-full flex-col p-3">
-          {/* Company logo (top-left) */}
+          {/* Company logo top-left */}
           <div className="flex items-center gap-2 mb-3">
             <div
               className="grid place-items-center rounded-xl bg-white/10"
@@ -271,13 +274,11 @@ export default function Home() {
               }}
               title="Company"
             >
-              <Image
+              <img
                 src="/images/company-logo.png"
                 alt="Company logo"
-                width={48}
-                height={48}
-                style={{ objectFit: "contain" }}
-                priority
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                draggable={false}
               />
             </div>
 
@@ -413,7 +414,6 @@ export default function Home() {
               }}
             />
 
-            {/* WebM: overlays removed + edge halo trimmed */}
             <div
               className="relative w-full overflow-hidden"
               style={{
